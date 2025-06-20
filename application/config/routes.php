@@ -63,6 +63,10 @@ $route['translate_uri_dashes'] = FALSE;
 $route['audiometri'] = 'audiometri/index';
 $route['audiometri/dashboard'] = 'audiometri/index';
 
+// Doctor view and review routes
+$route['audiometri/doctor_view'] = 'audiometri/doctor_view';
+$route['audiometri/review_dokter/(:num)'] = 'audiometri/review_dokter/$1';
+
 // CRUD routes
 $route['audiometri/create'] = 'audiometri/create';
 $route['audiometri/edit/(:num)'] = 'audiometri/edit/$1';

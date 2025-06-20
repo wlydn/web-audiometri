@@ -214,7 +214,7 @@
 				<div class="controls">
 					<button type="button" class="btn btn-primary" onclick="updateCharts()">Update Grafik</button>
 					<button type="button" class="btn btn-secondary" onclick="clearAudiometricData()">Clear Data Audiometri</button>
-					<button type="submit" class="btn btn-success" onclick="return confirm('Apakah Anda yakin ingin menyimpan data ini?')">
+					<button type="button" class="btn btn-success" onclick="showSimpanModal()">
 						<i class="fas fa-save"></i> <?= $action == 'edit' ? 'Update' : 'Simpan' ?> Data
 					</button>
 					<?php if ($action == 'edit'): ?>
@@ -226,6 +226,57 @@
 			</div>
 		</form>
 	</div>
+</div>
+
+<script>
+	function showSimpanModal() {
+		// Validate required fields
+		const requiredFields = ['perusahaan', 'jabatan', 'nama', 'umur', 'jenis_kelamin', 'no_rm', 'tanggal_tes'];
+		let isValid = true;
+		let firstInvalidField = null;
+
+		requiredFields.forEach(field => {
+			const input = document.getElementById(field);
+			if (!input.value.trim()) {
+				isValid = false;
+				input.style.borderColor = '#dc3545';
+				if (!firstInvalidField) firstInvalidField = input;
+			} else {
+				input.style.borderColor = '#ced4da';
+			}
+		});
+
+		if (!isValid) {
+			alert('Mohon lengkapi semua field yang wajib diisi (*)');
+			if (firstInvalidField) {
+				firstInvalidField.focus();
+			}
+			return;
+		}
+
+		// Show modal if validation passes
+		const simpanModal = new bootstrap.Modal(document.getElementById('simpanModal'));
+		simpanModal.show();
+	}
+</script>
+
+<!-- Modal Simpan Data -->
+<div class="modal fade" id="simpanModal" tabindex="-1" aria-labelledby="simpanModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="simpanModalLabel">Simpan Data Audiometri</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Apakah Anda yakin ingin menyimpan data audiometri?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary" onclick="submitForm()">Simpan</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal untuk riwayat No RM -->
@@ -550,28 +601,18 @@
 		}
 	});
 
+	// Form submission handler
+	function submitForm() {
+		const form = document.getElementById('audiometri-form');
+		isFormSubmitting = true;
+		form.submit();
+	}
+
 	// Form validation before submit
 	document.getElementById('audiometri-form').addEventListener('submit', function(e) {
-		isFormSubmitting = true;
-
-		// Basic validation
-		const requiredFields = ['perusahaan', 'jabatan', 'nama', 'umur', 'jenis_kelamin', 'no_rm', 'tanggal_tes'];
-		let isValid = true;
-
-		requiredFields.forEach(field => {
-			const input = document.getElementById(field);
-			if (!input.value.trim()) {
-				isValid = false;
-				input.style.borderColor = '#dc3545';
-			} else {
-				input.style.borderColor = '#ced4da';
-			}
-		});
-
-		if (!isValid) {
+		if (!isFormSubmitting) {
 			e.preventDefault();
-			alert('Mohon lengkapi semua field yang wajib diisi (*)');
-			isFormSubmitting = false;
+			showSimpanModal();
 			return false;
 		}
 	});

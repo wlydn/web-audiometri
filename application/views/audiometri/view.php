@@ -6,7 +6,7 @@
 		<div class="col-12">
 			<div class="d-flex justify-content-between align-items-center">
 				<div>
-					<h1 class="display-6 mb-2">
+					<h1 class="h2 mb-4">
 						<i class="fas fa-eye text-primary me-3"></i>
 						Detail Tes Audiometri
 					</h1>
@@ -26,7 +26,7 @@
 						class="btn btn-info" target="_blank">
 						<i class="fas fa-file-pdf me-1"></i> Export PDF
 					</a>
-					<button onclick="deleteRecord(<?= $test_data['id'] ?>, '<?= base_url('audiometri/list_tests') ?>')"
+					<button onclick="showDeleteModal(<?= $test_data['id'] ?>)"
 						class="btn btn-danger">
 						<i class="fas fa-trash me-1"></i> Hapus
 					</button>
@@ -36,7 +36,7 @@
 	</div>
 
 	<!-- Patient Information -->
-	<div class="card mb-4">
+	<div class="card mb-2">
 		<div class="card-header bg-primary text-white">
 			<h5 class="card-title mb-0">
 				<i class="fas fa-user me-2"></i>
@@ -108,6 +108,72 @@
 								<!-- Grid akan di-generate oleh JavaScript -->
 							</svg>
 						</div>
+						<!-- Right Ear Data -->
+						<div class="table-responsive">
+							<div class="card">
+								<div class="card-header bg-info text-white">
+									<h6 class="card-title mb-0">Data Telinga Kanan</h6>
+								</div>
+								<div class="card-body p-0">
+									<table class="table table-sm mb-0">
+										<thead class="table-light">
+											<tr>
+												<th>Frekuensi</th>
+												<th>250</th>
+												<th>500</th>
+												<th>1000</th>
+												<th>2000</th>
+												<th>3000</th>
+												<th>4000</th>
+												<th>6000</th>
+												<th>Rata²</th>
+											</tr>
+										</thead>
+										<tbody>
+											<?php
+											$frequencies = ['250', '500', '1000', '2000', '3000', '4000', '6000'];
+											?>
+											<tr>
+												<td style="font-weight: bold;">AC (dB)</td>
+												<td style="padding-left: 10px;"><?= $test_data['right_ac_250'] !== null ? $test_data['right_ac_250'] : '-' ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_ac_500'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_ac_1000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_ac_2000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_ac_3000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_ac_4000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_ac_6000'] ?></td>
+												<?php
+												$right_ac_values = [];
+												foreach ($frequencies as $freq) {
+													$value = $test_data['right_ac_' . $freq];
+													if ($value !== null) $right_ac_values[] = $value;
+												}
+												?>
+												<td style="padding-left: 10px;"><?= !empty($right_ac_values) ? number_format(array_sum($right_ac_values) / count($right_ac_values), 1) : '-' ?></td>
+											</tr>
+											<tr>
+												<td style="font-weight: bold;">BC (dB)</td>
+												<td style="padding-left: 10px;"><?= $test_data['right_bc_250'] !== null ? $test_data['left_bc_250'] : '-' ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_bc_500'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_bc_1000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_bc_2000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_bc_3000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_bc_4000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['right_bc_6000'] ?></td>
+												<?php
+												$right_bc_values = [];
+												foreach ($frequencies as $freq) {
+													$value = $test_data['right_bc_' . $freq];
+													if ($value !== null) $right_bc_values[] = $value;
+												}
+												?>
+												<td style="padding-left: 10px;"><?= !empty($right_bc_values) ? number_format(array_sum($right_bc_values) / count($right_bc_values), 1) : '-' ?></td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -120,142 +186,76 @@
 								<!-- Grid akan di-generate oleh JavaScript -->
 							</svg>
 						</div>
+						<!-- Left Ear Data -->
+						<div class="table-responsive">
+							<div class="card">
+								<div class="card-header bg-warning text-dark">
+									<h6 class="card-title mb-0">Data Telinga Kiri</h6>
+								</div>
+								<div class="card-body p-0">
+									<table class="table table-sm mb-0">
+										<thead class="table-light">
+											<tr>
+												<th>Frekuensi</th>
+												<th>250</th>
+												<th>500</th>
+												<th>1000</th>
+												<th>2000</th>
+												<th>3000</th>
+												<th>4000</th>
+												<th>6000</th>
+												<th>Rata²</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<td style="font-weight: bold;">AC (dB)</td>
+												<td style="padding-left: 10px;"><?= $test_data['left_ac_250'] !== null ? $test_data['left_ac_250'] : '-' ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_ac_500'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_ac_1000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_ac_2000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_ac_3000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_ac_4000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_ac_6000'] ?></td>
+												<?php
+												$left_ac_values = [];
+												foreach ($frequencies as $freq) {
+													$value = $test_data['left_ac_' . $freq];
+													if ($value !== null) $left_ac_values[] = $value;
+												}
+												?>
+												<td style="padding-left: 10px;"><?= !empty($left_ac_values) ? number_format(array_sum($left_ac_values) / count($left_ac_values), 1) : '-' ?></td>
+											</tr>
+											<tr>
+												<td style="font-weight: bold;">BC (dB)</td>
+												<td style="padding-left: 10px;"><?= $test_data['left_bc_250'] !== null ? $test_data['left_bc_250'] : '-' ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_bc_500'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_bc_1000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_bc_2000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_bc_3000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_bc_4000'] ?></td>
+												<td style="padding-left: 10px;"><?= $test_data['left_bc_6000'] ?></td>
+												<?php
+												$left_bc_values = [];
+												foreach ($frequencies as $freq) {
+													$value = $test_data['left_bc_' . $freq];
+													if ($value !== null) $left_bc_values[] = $value;
+												}
+												?>
+												<td style="padding-left: 10px;"><?= !empty($left_bc_values) ? number_format(array_sum($left_bc_values) / count($left_bc_values), 1) : '-' ?></td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
-			</div><div class="row mb-4">
-		<!-- Right Ear Data -->
-		<div class="table-responsive">
-			<div class="card">
-				<div class="card-header bg-info text-white">
-					<h6 class="card-title mb-0">Data Telinga Kanan</h6>
-				</div>
-				<div class="card-body p-0">
-					<table class="table table-sm mb-0">
-						<thead class="table-light">
-							<tr>
-								<th>Frekuensi</th>
-								<th>250</th>
-								<th>500</th>
-								<th>1000</th>
-								<th>2000</th>
-								<th>3000</th>
-								<th>4000</th>
-								<th>6000</th>
-								<th>Rata²</th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php
-							$frequencies = ['250', '500', '1000', '2000', '3000', '4000', '6000'];
-							?>
-							<tr>
-								<td style="font-weight: bold;">AC (dB)</td>
-								<td style="padding-left: 10px;"><?= $test_data['right_ac_250'] !== null ? $test_data['left_ac_250'] : '-' ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_ac_500'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_ac_1000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_ac_2000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_ac_3000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_ac_4000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_ac_6000'] ?></td>
-								<?php
-								$right_ac_values = [];
-								foreach ($frequencies as $freq) {
-									$value = $test_data['right_ac_' . $freq];
-									if ($value !== null) $right_ac_values[] = $value;
-								}
-								?>
-								<td style="padding-left: 10px;"><?= !empty($right_ac_values) ? number_format(array_sum($right_ac_values) / count($right_ac_values), 1) : '-' ?></td>
-							</tr>
-							<tr>
-								<td style="font-weight: bold;">BC (dB)</td>
-								<td style="padding-left: 10px;"><?= $test_data['right_bc_250'] !== null ? $test_data['left_ac_250'] : '-' ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_bc_500'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_bc_1000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_bc_2000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_bc_3000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_bc_4000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['right_bc_6000'] ?></td>
-								<?php
-								$right_bc_values = [];
-								foreach ($frequencies as $freq) {
-									$value = $test_data['right_bc_' . $freq];
-									if ($value !== null) $right_bc_values[] = $value;
-								}
-								?>
-								<td style="padding-left: 10px;"><?= !empty($right_bc_values) ? number_format(array_sum($right_bc_values) / count($right_bc_values), 1) : '-' ?></td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
 			</div>
 		</div>
-
-		<!-- Left Ear Data -->
-		<div class="table-responsive">
-			<div class="card">
-				<div class="card-header bg-warning text-dark">
-					<h6 class="card-title mb-0">Data Telinga Kiri</h6>
-				</div>
-				<div class="card-body p-0">
-					<table class="table table-sm mb-0">
-						<thead class="table-light">
-							<tr>
-								<th>Frekuensi</th>
-								<th>250</th>
-								<th>500</th>
-								<th>1000</th>
-								<th>2000</th>
-								<th>3000</th>
-								<th>4000</th>
-								<th>6000</th>
-								<th>Rata²</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<td style="font-weight: bold;">AC (dB)</td>
-								<td style="padding-left: 10px;"><?= $test_data['left_ac_250'] !== null ? $test_data['left_ac_250'] : '-' ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_ac_500'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_ac_1000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_ac_2000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_ac_3000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_ac_4000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_ac_6000'] ?></td>
-								<?php
-								$left_ac_values = [];
-								foreach ($frequencies as $freq) {
-									$value = $test_data['left_ac_' . $freq];
-									if ($value !== null) $left_ac_values[] = $value;
-								}
-								?>
-								<td style="padding-left: 10px;"><?= !empty($left_ac_values) ? number_format(array_sum($left_ac_values) / count($left_ac_values), 1) : '-' ?></td>
-							</tr>
-							<tr>
-								<td style="font-weight: bold;">BC (dB)</td>
-								<td style="padding-left: 10px;"><?= $test_data['left_bc_250'] !== null ? $test_data['left_ac_250'] : '-' ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_bc_500'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_bc_1000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_bc_2000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_bc_3000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_bc_4000'] ?></td>
-								<td style="padding-left: 10px;"><?= $test_data['left_bc_6000'] ?></td>
-								<?php
-								$left_bc_values = [];
-								foreach ($frequencies as $freq) {
-									$value = $test_data['left_bc_' . $freq];
-									if ($value !== null) $left_bc_values[] = $value;
-								}
-								?>
-								<td style="padding-left: 10px;"><?= !empty($left_bc_values) ? number_format(array_sum($left_bc_values) / count($left_bc_values), 1) : '-' ?></td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</div>
-		</div>
-	</div>
-
-			<!-- Legend -->
+		
+		<!-- Legend -->
+		<div class="row mb-4">
 			<div class="legend-view">
 				<div class="legend-item">
 					<div class="legend-symbol"></div>
@@ -278,7 +278,7 @@
 	</div>
 
 	<!-- Audiometric Data Tables -->
-	
+
 
 	<!-- Impression -->
 	<div class="card mb-4">
@@ -320,7 +320,42 @@
 	<?= json_encode($test_data) ?>
 </script>
 
+<!-- Modal Delete Data -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus Data</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				Apakah Anda yakin ingin menghapus data audiometri ini?
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+				<button type="button" class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <script>
+	let deleteId = null;
+	let deleteRedirectUrl = '<?= base_url('audiometri/list_tests') ?>';
+
+	function showDeleteModal(id) {
+		deleteId = id;
+		const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+		deleteModal.show();
+	}
+
+	function confirmDelete() {
+		if (deleteId) {
+			// Redirect to delete URL without additional confirmation
+			window.location.replace('<?= base_url('audiometri/delete/') ?>' + deleteId);
+		}
+	}
+
 	// JavaScript untuk menampilkan audiogram
 	const testData = JSON.parse(document.getElementById('test-data').textContent);
 
@@ -521,9 +556,7 @@
 		display: flex;
 		justify-content: center;
 		gap: 30px;
-		margin-top: 20px;
 		padding: 15px;
-		background: #f8f9fa;
 		border-radius: 10px;
 		flex-wrap: wrap;
 	}

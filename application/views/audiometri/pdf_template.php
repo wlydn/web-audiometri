@@ -836,7 +836,7 @@ function generate_audiogram_chart($ear, $test_data)
 	}
 
 	// Axis labels
-	$svg .= '<text x="12" y="12" class="axis-label" style="font-weight: 600; font-size: 9px;">dB</text>';
+	// $svg .= '<text x="12" y="12" class="axis-label" style="font-weight: 600; font-size: 9px;">dB</text>';
 
 	// Color scheme: AC = RED (both ears), BC = BLUE (both ears) - Medical Standard
 	$ac_color = '#0066CC'; // RED for Air Conduction

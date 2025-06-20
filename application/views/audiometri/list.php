@@ -4,7 +4,7 @@
 <div class="container-fluid p-4">
 	<div class="row mb-4">
 		<div class="col-12">
-			<h1 class="display-5 mb-4">
+			<h1 class="h2 mb-4">
 				<i class="fas fa-list text-primary me-3"></i>
 				Daftar Tes Audiometri
 			</h1>
@@ -74,9 +74,9 @@
 				<a href="<?= base_url('audiometri/create') ?>" class="btn btn-primary btn-sm">
 					<i class="fas fa-plus me-1"></i> Tes Baru
 				</a>
-				<button onclick="showReportModal()" class="btn btn-success btn-sm">
+				<a href="<?= base_url('audiometri/export_excel') ?>" class="btn btn-success btn-sm">
 					<i class="fas fa-file-excel me-1"></i> Export Excel
-				</button>
+				</a>
 			</div>
 		</div>
 		<div class="card-body p-0">
@@ -116,9 +116,9 @@
 										<?php
 										$impression = $test['impression'];
 										if (!empty($impression)) {
-											echo '<span class="badge bg-success">Sudah Direview</span>';
+											echo '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Sudah Direview</span>';
 										} else {
-											echo '<span class="badge bg-danger">Belum Direview</span>';
+											echo '<span class="badge bg-danger"><i class="fas fa-clock me-1"></i>Menunggu Review</span>';
 										}
 										?>
 									</td>

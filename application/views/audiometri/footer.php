@@ -3,11 +3,6 @@
 ?>
     </div> <!-- End Content Wrapper -->
 
-    <!-- Floating Action Button -->
-    <a href="<?= base_url('audiometri/create') ?>" class="btn btn-primary btn-floating" title="Tes Baru">
-        <i class="fas fa-plus"></i>
-    </a>
-
     <!-- Footer -->
     <div class="footer-custom">
         <p class="mb-0">

@@ -1,11 +1,23 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+// use DateTime;
+
 /**
  * Controller untuk aplikasi audiometri - FINAL FIX VERSION
  * 
  * @author ArChiee
  * @version 2.0.3 - COMPLETELY REMOVED permit_empty dependency
+ */
+/**
+ * @property CI_Input $input
+ * @property CI_Session $session
+ * @property CI_Form_validation $form_validation
+ * @property Audiometri_model $Audiometri_model
+ * @property CI_Security $security
+ * @property CI_Pagination $pagination
+ * @property Pdf_generator $pdf_generator
+ * @property CI_Output $output
  */
 class Audiometri extends CI_Controller
 {
@@ -43,7 +55,7 @@ class Audiometri extends CI_Controller
 	public function index()
 	{
 		try {
-			$data['title'] = 'Dashboard Audiometri';
+			$data['title'] = 'Dashboard';
 
 			// Load stats dengan error handling
 			$data['stats'] = $this->Audiometri_model->get_dashboard_stats();
@@ -64,7 +76,7 @@ class Audiometri extends CI_Controller
 	public function create()
 	{
 		try {
-			$data['title'] = 'Tes Audiometri Baru';
+			$data['title'] = 'Tes Baru';
 			$data['action'] = 'create';
 			$data['test_data'] = null;
 
@@ -102,7 +114,7 @@ class Audiometri extends CI_Controller
 				return;
 			}
 
-			$data['title'] = 'Edit Tes Audiometri';
+			$data['title'] = 'Edit Tes';
 			$data['action'] = 'edit';
 			$data['test_data'] = $test_data;
 
@@ -144,7 +156,7 @@ class Audiometri extends CI_Controller
 				return !empty(trim($value));
 			});
 
-			$data['title'] = 'Daftar Tes Audiometri';
+			$data['title'] = 'Daftar Pasien';
 			$data['tests'] = $this->Audiometri_model->get_tests($limit, $offset, $filters);
 			$data['total_tests'] = $this->Audiometri_model->count_tests($filters);
 			$data['filters'] = $filters;
@@ -184,7 +196,7 @@ class Audiometri extends CI_Controller
 				return;
 			}
 
-			$data['title'] = 'Detail Tes Audiometri';
+			$data['title'] = 'Detail Tes';
 			$data['test_data'] = $test_data;
 
 			$this->load->view('audiometri/header', $data);
@@ -625,23 +637,20 @@ class Audiometri extends CI_Controller
 	 */
 	public function export_pdf($id = null)
 	{
-		// TAMBAHKAN sebelum load view:
-		$logo_path = FCPATH . 'assets/images/logo/logo-kop.png';
-		if (file_exists($logo_path)) {
-			$image_data = file_get_contents($logo_path);
-			$image_info = getimagesize($logo_path);
-			$mime_type = $image_info['mime'];
-			$data['logo_base64'] = 'data:' . $mime_type . ';base64,' . base64_encode($image_data);
-		} else {
-			$data['logo_base64'] = null;
-		}
 		try {
 			if (!$id || !is_numeric($id)) {
+				if ($this->input->is_ajax_request()) {
+					$this->_json_response(['status' => false, 'message' => 'Invalid ID']);
+					return;
+				}
 				show_404();
 				return;
 			}
 
 			$test_data = $this->Audiometri_model->get_test($id);
+
+			// Get logo
+			$data['logo_base64'] = $this->get_logo_for_pdf();
 			if (!$test_data) {
 				$this->session->set_flashdata('error', 'Data tes tidak ditemukan');
 				redirect('audiometri/list_tests');
@@ -702,117 +711,306 @@ class Audiometri extends CI_Controller
 	 */
 	public function _generate_audiogram_chart($ear, $test_data)
 	{
-		$width = 280;
-		$height = 240;
-		$margin_left = 30;
-		$margin_right = 20;
-		$margin_top = 20;
-		$margin_bottom = 40;
+		try {
+			$width = 280;
+			$height = 240;
+			$margin_left = 30;
+			$margin_right = 20;
+			$margin_top = 20;
+			$margin_bottom = 40;
 
-		$chart_width = $width - $margin_left - $margin_right;
-		$chart_height = $height - $margin_top - $margin_bottom;
+			$chart_width = $width - $margin_left - $margin_right;
+			$chart_height = $height - $margin_top - $margin_bottom;
 
-		$frequencies = [250, 500, 1000, 2000, 3000, 4000, 6000];
-		$db_range = [-10, 140];
+			$frequencies = [250, 500, 1000, 2000, 3000, 4000, 6000];
+			$db_range = [-10, 140];
 
-		$svg = '<svg class="chart-svg" width="' . $width . '" height="' . $height . '" xmlns="http://www.w3.org/2000/svg">';
+			$svg = '<svg class="chart-svg" width="' . $width . '" height="' . $height . '" xmlns="http://www.w3.org/2000/svg">';
 
-		// Background
-		$svg .= '<rect width="' . $width . '" height="' . $height . '" fill="#fff" stroke="#000" stroke-width="1"/>';
+			// Background
+			$svg .= '<rect width="' . $width . '" height="' . $height . '" fill="#fff" stroke="#000" stroke-width="1"/>';
 
-		// Draw grid
-		for ($i = 0; $i < count($frequencies); $i++) {
-			$x = $margin_left + ($i * $chart_width / (count($frequencies) - 1));
-			$svg .= '<line x1="' . $x . '" y1="' . $margin_top . '" x2="' . $x . '" y2="' . ($height - $margin_bottom) . '" stroke="#ccc" stroke-width="0.5"/>';
-
-			// Frequency labels
-			$svg .= '<text x="' . $x . '" y="' . ($height - 5) . '" text-anchor="middle" font-size="8" fill="#000">' . $frequencies[$i] . '</text>';
-		}
-
-		// Horizontal lines (dB levels)
-		for ($db = -10; $db <= 140; $db += 10) {
-			$y = $margin_top + (($db - $db_range[0]) / ($db_range[1] - $db_range[0])) * $chart_height;
-			$stroke_width = ($db % 20 == 0) ? "1" : "0.5";
-			$stroke_color = ($db % 20 == 0) ? "#999" : "#ccc";
-			$svg .= '<line x1="' . $margin_left . '" y1="' . $y . '" x2="' . ($width - $margin_right) . '" y2="' . $y . '" stroke="' . $stroke_color . '" stroke-width="' . $stroke_width . '"/>';
-
-			// dB labels
-			if ($db % 20 == 0) {
-				$svg .= '<text x="5" y="' . ($y + 3) . '" font-size="8" fill="#000">' . $db . '</text>';
-			}
-		}
-
-		// Plot AC (Air Conduction) data
-		$ac_points = array();
-		foreach ($frequencies as $i => $freq) {
-			$value = $test_data[$ear . '_ac_' . $freq];
-			if ($value !== null && is_numeric($value)) {
+			// Draw grid
+			for ($i = 0; $i < count($frequencies); $i++) {
 				$x = $margin_left + ($i * $chart_width / (count($frequencies) - 1));
-				$y = $margin_top + (($value - $db_range[0]) / ($db_range[1] - $db_range[0])) * $chart_height;
-				$ac_points[] = $x . ',' . $y;
+				$svg .= '<line x1="' . $x . '" y1="' . $margin_top . '" x2="' . $x . '" y2="' . ($height - $margin_bottom) . '" stroke="#ccc" stroke-width="0.5"/>';
 
-				// Add AC symbol (arrow)
-				$symbol = ($ear == 'right') ? '◀' : '▶';
-				$color = ($ear == 'right') ? '#0066CC' : '#CC0000';
-				$svg .= '<text x="' . $x . '" y="' . ($y + 3) . '" text-anchor="middle" fill="' . $color . '" font-size="10" font-weight="bold">' . $symbol . '</text>';
+				// Frequency labels
+				$svg .= '<text x="' . $x . '" y="' . ($height - 5) . '" text-anchor="middle" font-size="8" fill="#000">' . $frequencies[$i] . '</text>';
 			}
-		}
 
-		// Draw AC line
-		if (count($ac_points) > 1) {
-			$color = ($ear == 'right') ? '#0066CC' : '#CC0000';
-			$svg .= '<polyline points="' . implode(' ', $ac_points) . '" stroke="' . $color . '" stroke-width="2" fill="none" stroke-dasharray="3,3"/>';
-		}
+			// Horizontal lines (dB levels)
+			for ($db = -10; $db <= 140; $db += 10) {
+				$y = $margin_top + (($db - $db_range[0]) / ($db_range[1] - $db_range[0])) * $chart_height;
+				$stroke_width = ($db % 20 == 0) ? "1" : "0.5";
+				$stroke_color = ($db % 20 == 0) ? "#999" : "#ccc";
+				$svg .= '<line x1="' . $margin_left . '" y1="' . $y . '" x2="' . ($width - $margin_right) . '" y2="' . $y . '" stroke="' . $stroke_color . '" stroke-width="' . $stroke_width . '"/>';
 
-		// Plot BC (Bone Conduction) data
-		$bc_points = array();
-		foreach ($frequencies as $i => $freq) {
-			$value = $test_data[$ear . '_bc_' . $freq];
-			if ($value !== null && is_numeric($value)) {
-				$x = $margin_left + ($i * $chart_width / (count($frequencies) - 1));
-				$y = $margin_top + (($value - $db_range[0]) / ($db_range[1] - $db_range[0])) * $chart_height;
-				$bc_points[] = $x . ',' . $y;
-
-				// Add BC symbol
-				$color = ($ear == 'right') ? '#0066CC' : '#CC0000';
-				if ($ear == 'right') {
-					// Circle for right ear BC
-					$svg .= '<circle cx="' . $x . '" cy="' . $y . '" r="3" fill="' . $color . '" stroke="#000" stroke-width="1"/>';
-				} else {
-					// Diamond for left ear BC
-					$svg .= '<rect x="' . ($x - 3) . '" y="' . ($y - 3) . '" width="6" height="6" fill="' . $color . '" stroke="#000" stroke-width="1" transform="rotate(45 ' . $x . ' ' . $y . ')"/>';
+				// dB labels
+				if ($db % 20 == 0) {
+					$svg .= '<text x="5" y="' . ($y + 3) . '" font-size="8" fill="#000">' . $db . '</text>';
 				}
 			}
+
+			// Plot AC (Air Conduction) data
+			$ac_points = array();
+			foreach ($frequencies as $i => $freq) {
+				$value = $test_data[$ear . '_ac_' . $freq];
+				if ($value !== null && is_numeric($value)) {
+					$x = $margin_left + ($i * $chart_width / (count($frequencies) - 1));
+					$y = $margin_top + (($value - $db_range[0]) / ($db_range[1] - $db_range[0])) * $chart_height;
+					$ac_points[] = $x . ',' . $y;
+
+					// Add AC symbol (arrow)
+					$symbol = ($ear == 'right') ? '◀' : '▶';
+					$color = ($ear == 'right') ? '#0066CC' : '#CC0000';
+					$svg .= '<text x="' . $x . '" y="' . ($y + 3) . '" text-anchor="middle" fill="' . $color . '" font-size="10" font-weight="bold">' . $symbol . '</text>';
+				}
+			}
+
+			// Draw AC line
+			if (count($ac_points) > 1) {
+				$color = ($ear == 'right') ? '#0066CC' : '#CC0000';
+				$svg .= '<polyline points="' . implode(' ', $ac_points) . '" stroke="' . $color . '" stroke-width="2" fill="none" stroke-dasharray="3,3"/>';
+			}
+
+			// Plot BC (Bone Conduction) data
+			$bc_points = array();
+			foreach ($frequencies as $i => $freq) {
+				$value = $test_data[$ear . '_bc_' . $freq];
+				if ($value !== null && is_numeric($value)) {
+					$x = $margin_left + ($i * $chart_width / (count($frequencies) - 1));
+					$y = $margin_top + (($value - $db_range[0]) / ($db_range[1] - $db_range[0])) * $chart_height;
+					$bc_points[] = $x . ',' . $y;
+
+					// Add BC symbol
+					$color = ($ear == 'right') ? '#0066CC' : '#CC0000';
+					if ($ear == 'right') {
+						// Circle for right ear BC
+						$svg .= '<circle cx="' . $x . '" cy="' . $y . '" r="3" fill="' . $color . '" stroke="#000" stroke-width="1"/>';
+					} else {
+						// Diamond for left ear BC
+						$svg .= '<rect x="' . ($x - 3) . '" y="' . ($y - 3) . '" width="6" height="6" fill="' . $color . '" stroke="#000" stroke-width="1" transform="rotate(45 ' . $x . ' ' . $y . ')"/>';
+					}
+				}
+			}
+
+			// Draw BC line
+			if (count($bc_points) > 1) {
+				$color = ($ear == 'right') ? '#0066CC' : '#CC0000';
+				$svg .= '<polyline points="' . implode(' ', $bc_points) . '" stroke="' . $color . '" stroke-width="2" fill="none"/>';
+			}
+
+			$svg .= '</svg>';
+
+			return $svg;
+		} catch (Exception $e) {
+			log_message('error', 'Error generating audiogram chart: ' . $e->getMessage());
+			return '<svg width="280" height="240"><text x="140" y="120" text-anchor="middle" fill="red">Error generating chart</text></svg>';
 		}
-
-		// Draw BC line
-		if (count($bc_points) > 1) {
-			$color = ($ear == 'right') ? '#0066CC' : '#CC0000';
-			$svg .= '<polyline points="' . implode(' ', $bc_points) . '" stroke="' . $color . '" stroke-width="2" fill="none"/>';
-		}
-
-		$svg .= '</svg>';
-
-		return $svg;
 	}
 	private function get_logo_for_pdf()
 	{
-		// Method 1: Absolute file path (RECOMMENDED)
-		$logo_file_path = FCPATH . 'assets/images/logo/logo-kop.png';
+		try {
+			// Method 1: Absolute file path (RECOMMENDED)
+			$logo_file_path = FCPATH . 'assets/images/logo/logo-kop.png';
 
-		if (file_exists($logo_file_path)) {
-			return $logo_file_path;
-		}
+			if (!file_exists($logo_file_path)) {
+				log_message('error', 'Logo file not found at: ' . $logo_file_path);
+				return null;
+			}
 
-		// Method 2: Base64 encoded (FALLBACK)
-		if (file_exists($logo_file_path)) {
+			// Try to get file info first
+			$image_info = @getimagesize($logo_file_path);
+			if ($image_info === false) {
+				log_message('error', 'Invalid image file at: ' . $logo_file_path);
+				return null;
+			}
+
+			// For PDF generation, return file path
+			if ($this->input->get('format') === 'pdf') {
+				return $logo_file_path;
+			}
+
+			// For other uses, return base64
 			$image_data = file_get_contents($logo_file_path);
-			$image_info = getimagesize($logo_file_path);
-			$mime_type = $image_info['mime'];
-			return 'data:' . $mime_type . ';base64,' . base64_encode($image_data);
+			if ($image_data === false) {
+				log_message('error', 'Failed to read logo file at: ' . $logo_file_path);
+				return null;
+			}
+
+			return 'data:' . $image_info['mime'] . ';base64,' . base64_encode($image_data);
+		} catch (Exception $e) {
+			log_message('error', 'Error processing logo: ' . $e->getMessage());
+			return null;
+		}
+	}
+
+	/**
+	 * Export data to Excel
+	 */
+	public function export_excel()
+	{
+		try {
+			// Get all audiometri data
+			$data['audiometri_data'] = $this->Audiometri_model->get_all_tests();
+
+			// Load the export view
+			$this->load->view('audiometri/export_excel', $data);
+		} catch (Exception $e) {
+			log_message('error', 'Export Excel error: ' . $e->getMessage());
+			$this->session->set_flashdata('error', 'Gagal mengexport data ke Excel');
+			redirect('audiometri/list_tests');
+		}
+	}
+
+	/**
+	 * Doctor view - shows today's patients for impression editing
+	 */
+	public function doctor_view()
+	{
+		try {
+			$data['title'] = 'Panel Dokter - Data Pasien Hari Ini';
+
+			// Get today's tests
+			// Get today's tests with date filter
+			$today = date('Y-m-d');
+			$data['tests'] = $this->Audiometri_model->get_tests(null, 0, ['tanggal_dari' => $today, 'tanggal_sampai' => $today]);
+
+			$this->load->view('audiometri/header', $data);
+			$this->load->view('audiometri/doctor_view', $data);
+			$this->load->view('audiometri/footer');
+		} catch (Exception $e) {
+			log_message('error', 'Doctor view error: ' . $e->getMessage());
+			$this->_show_error_page('Panel dokter tidak dapat dimuat', $e->getMessage());
+		}
+	}
+
+	/**
+	 * Update impression only (for doctors)
+	 */
+	public function update_impression()
+	{
+		try {
+			if (!$this->input->is_ajax_request()) {
+				show_404();
+				return;
+			}
+
+			$test_id = $this->input->post('test_id');
+			$impression = trim($this->input->post('impression'));
+
+			if (!$test_id || !is_numeric($test_id)) {
+				$this->_json_response([
+					'status' => false,
+					'message' => 'ID tes tidak valid'
+				]);
+				return;
+			}
+
+			if (empty($impression)) {
+				$this->_json_response([
+					'status' => false,
+					'message' => 'Impression tidak boleh kosong'
+				]);
+				return;
+			}
+
+			// Update test data with impression only
+			$result = $this->Audiometri_model->update_test($test_id, ['impression' => $impression]);
+			$this->_json_response($result);
+		} catch (Exception $e) {
+			log_message('error', 'Update impression error: ' . $e->getMessage());
+			$this->_json_response([
+				'status' => false,
+				'message' => 'Terjadi kesalahan sistem'
+			]);
+		}
+	}
+
+	/**
+	 * Get patient data for modal view
+	 */
+	public function get_patient_data($id = null)
+	{
+		try {
+			if (!$id || !is_numeric($id)) {
+				echo '<div class="alert alert-danger">ID tidak valid</div>';
+				return;
+			}
+
+			$test_data = $this->Audiometri_model->get_test($id);
+			if (!$test_data) {
+				echo '<div class="alert alert-danger">Data tidak ditemukan</div>';
+				return;
+			}
+
+			// Load partial view for patient data
+			$this->load->view('audiometri/patient_data_partial', ['test_data' => $test_data]);
+		} catch (Exception $e) {
+			log_message('error', 'Get patient data error: ' . $e->getMessage());
+			echo '<div class="alert alert-danger">Gagal memuat data pasien</div>';
+		}
+	}
+
+	public function review_dokter($id = null)
+	{
+		// Validasi ID
+		if (!$id || !is_numeric($id)) {
+			show_404();
+			return;
 		}
 
-		// Method 3: Return null jika tidak ada logo
-		return null;
+		// Load model
+		$this->load->model('Audiometri_model');
+
+		// Ambil data test berdasarkan ID
+		$data['title'] = 'Data Audiometri';
+		$data['test_data'] = $this->Audiometri_model->get_test($id);
+		$data['action'] = 'review_dokter';
+
+		if (!$data['test_data']) {
+			show_404();
+			return;
+		}
+
+		// Jika ada POST request (form disubmit)
+		if ($this->input->method(TRUE) == 'POST') {
+
+            // Ambil data impression dari POST
+            $impression = $this->input->post('impression');
+
+            if (empty($impression)) {
+                $this->session->set_flashdata('error', 'Impression tidak boleh kosong');
+                redirect('audiometri/review_dokter/' . $id);
+                return;
+            }
+
+            // Ambil data test yang ada
+            $existing_data = $this->Audiometri_model->get_test($id);
+            if (!$existing_data) {
+                $this->session->set_flashdata('error', 'Data tidak ditemukan');
+                redirect('audiometri/review_dokter/' . $id);
+                return;
+            }
+
+            // Update hanya field impression
+            $update_data = $existing_data;
+            $update_data['impression'] = $impression;
+
+            // Simpan update
+            $result = $this->Audiometri_model->update_test($id, $update_data);
+            if ($result['status']) {
+                $this->session->set_flashdata('success', 'Impression berhasil disimpan!');
+            } else {
+                $this->session->set_flashdata('error', $result['message']);
+            }
+            redirect('audiometri/review_dokter/' . $id);
+		}
+
+		// Load view
+		$this->load->view('audiometri/header', $data);
+		$this->load->view('audiometri/review_dokter', $data);
+		$this->load->view('audiometri/footer');
 	}
 }

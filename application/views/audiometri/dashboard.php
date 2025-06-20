@@ -4,7 +4,7 @@
 <div class="container-fluid p-4">
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="display-4 text-center mb-4">
+           <h1 class="h1 text-center mb-4">
                 <i class="fas fa-chart-line text-primary me-3"></i>
                 Dashboard Audiometri
             </h1>

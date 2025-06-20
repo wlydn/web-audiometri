@@ -6,7 +6,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= isset($title) ? $title . ' - ' : '' ?>Audiometri by ArChiee</title>
+    <title><?= isset($title) ? $title . ' - ' : '' ?>Audiometri</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="<?= base_url('assets/images/logo/logo-kop.png') ?>">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -103,8 +106,7 @@
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
             <a class="navbar-brand" href="<?= base_url('audiometri') ?>">
-                <i class="fas fa-stethoscope me-2"></i>
-                Audiometri by ArChiee
+                Sistem Manajemen Audiometri
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -129,6 +131,12 @@
                         <a class="nav-link <?= ($this->router->method == 'list_tests') ? 'active' : '' ?>" 
                            href="<?= base_url('audiometri/list_tests') ?>">
                             <i class="fas fa-list me-1"></i> Daftar Tes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($this->router->method == 'doctor_view') ? 'active' : '' ?>" 
+                           href="<?= base_url('audiometri/doctor_view') ?>">
+                            <i class="fa-solid fa-user-doctor"></i> Panel Dokter
                         </a>
                     </li>
                     <li class="nav-item dropdown">

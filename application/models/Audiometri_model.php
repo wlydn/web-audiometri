@@ -180,8 +180,7 @@ class Audiometri_model extends CI_Model {
             // Sanitize data
             $data = $this->_sanitize_data($data);
 
-            // Generate impression otomatis
-            $data['impression'] = $this->input->post('impression');
+            // Update timestamp
             $data['updated_at'] = date('Y-m-d H:i:s');
             
             // Begin transaction
@@ -588,5 +587,23 @@ class Audiometri_model extends CI_Model {
         }
         
         return $data;
+    }
+
+    /**
+     * Get all audiometri test data for export
+     */
+    public function get_all_tests() {
+        try {
+            $this->db->select('*');
+            $this->db->from($this->table);
+            $this->db->order_by('tanggal_tes', 'DESC');
+            
+            $result = $this->db->get()->result_array();
+            return $result ?: [];
+            
+        } catch (Exception $e) {
+            log_message('error', 'Get all tests error: ' . $e->getMessage());
+            return [];
+        }
     }
 }
