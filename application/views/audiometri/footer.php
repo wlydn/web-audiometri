@@ -69,41 +69,92 @@
             $('.alert').fadeOut('slow');
         }, 5000);
         
-        // Confirm delete actions
+        // Confirm delete actions with SweetAlert
         function confirmDelete(url, message = 'Yakin ingin menghapus data ini?') {
-            if (confirm(message)) {
-                window.location.href = url;
-            }
+            Swal.fire({
+                title: 'Konfirmasi Hapus',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
         }
         
-        // AJAX delete function
+        // AJAX delete function with SweetAlert
         function deleteRecord(id, redirectUrl = null) {
-            if (!confirm('Yakin ingin menghapus data ini?')) {
-                return;
-            }
-            
-            fetch('<?= base_url('audiometri/delete/') ?>' + id, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+            Swal.fire({
+                title: 'Konfirmasi Hapus',
+                text: 'Yakin ingin menghapus data ini? Data yang dihapus tidak dapat dikembalikan!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Menghapus...',
+                        text: 'Mohon tunggu sebentar',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    fetch('<?= base_url('audiometri/delete/') ?>' + id, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status) {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: data.message || 'Data berhasil dihapus',
+                                icon: 'success',
+                                timer: 3000,
+                                timerProgressBar: true,
+                                showConfirmButton: false
+                            }).then(() => {
+                                if (redirectUrl) {
+                                    window.location.href = redirectUrl;
+                                } else {
+                                    location.reload();
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Gagal!',
+                                text: data.message || 'Gagal menghapus data',
+                                icon: 'error',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Terjadi kesalahan saat menghapus data',
+                            icon: 'error',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    });
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status) {
-                    alert('Data berhasil dihapus');
-                    if (redirectUrl) {
-                        window.location.href = redirectUrl;
-                    } else {
-                        location.reload();
-                    }
-                } else {
-                    alert('Gagal menghapus data: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan saat menghapus data');
             });
         }
     </script>

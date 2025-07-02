@@ -974,38 +974,71 @@ class Audiometri extends CI_Controller
 			return;
 		}
 
-		// Jika ada POST request (form disubmit)
+		// Handle POST request
 		if ($this->input->method(TRUE) == 'POST') {
+			try {
+				// Get impression from POST
+				$impression = $this->input->post('impression');
 
-            // Ambil data impression dari POST
-            $impression = $this->input->post('impression');
+				if (empty($impression)) {
+					if ($this->input->is_ajax_request()) {
+						$this->_json_response([
+							'status' => false,
+							'message' => 'Impression tidak boleh kosong'
+						]);
+						return;
+					}
+					$this->session->set_flashdata('error', 'Impression tidak boleh kosong');
+					redirect('audiometri/review_dokter/' . $id);
+					return;
+				}
 
-            if (empty($impression)) {
-                $this->session->set_flashdata('error', 'Impression tidak boleh kosong');
-                redirect('audiometri/review_dokter/' . $id);
-                return;
-            }
+				// Get existing test data
+				$existing_data = $this->Audiometri_model->get_test($id);
+				if (!$existing_data) {
+					if ($this->input->is_ajax_request()) {
+						$this->_json_response([
+							'status' => false,
+							'message' => 'Data tidak ditemukan'
+						]);
+						return;
+					}
+					$this->session->set_flashdata('error', 'Data tidak ditemukan');
+					redirect('audiometri/review_dokter/' . $id);
+					return;
+				}
 
-            // Ambil data test yang ada
-            $existing_data = $this->Audiometri_model->get_test($id);
-            if (!$existing_data) {
-                $this->session->set_flashdata('error', 'Data tidak ditemukan');
-                redirect('audiometri/review_dokter/' . $id);
-                return;
-            }
+				// Update only impression field
+				$update_data = $existing_data;
+				$update_data['impression'] = $impression;
 
-            // Update hanya field impression
-            $update_data = $existing_data;
-            $update_data['impression'] = $impression;
+				// Save update
+				$result = $this->Audiometri_model->update_test($id, $update_data);
 
-            // Simpan update
-            $result = $this->Audiometri_model->update_test($id, $update_data);
-            if ($result['status']) {
-                $this->session->set_flashdata('success', 'Impression berhasil disimpan!');
-            } else {
-                $this->session->set_flashdata('error', $result['message']);
-            }
-            redirect('audiometri/review_dokter/' . $id);
+				if ($this->input->is_ajax_request()) {
+					$this->_json_response($result);
+					return;
+				}
+
+				if ($result['status']) {
+					$this->session->set_flashdata('success', 'Impression berhasil disimpan!');
+				} else {
+					$this->session->set_flashdata('error', $result['message']);
+				}
+				redirect('audiometri/review_dokter/' . $id);
+
+			} catch (Exception $e) {
+				log_message('error', 'Review dokter update error: ' . $e->getMessage());
+				if ($this->input->is_ajax_request()) {
+					$this->_json_response([
+						'status' => false,
+						'message' => 'Terjadi kesalahan sistem'
+					]);
+					return;
+				}
+				$this->session->set_flashdata('error', 'Terjadi kesalahan sistem');
+				redirect('audiometri/review_dokter/' . $id);
+			}
 		}
 
 		// Load view

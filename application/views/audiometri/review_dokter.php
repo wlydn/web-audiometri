@@ -255,42 +255,81 @@
 
 <script>
 	function showSimpanModal() {
-		// Show modal without validating required fields since they are readonly
-		const simpanModal = new bootstrap.Modal(document.getElementById('simpanModal'));
-		simpanModal.show();
+		Swal.fire({
+			title: 'Update Data Audiometri',
+			text: 'Apakah Anda yakin ingin mengupdate data audiometri ini?',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Ya, Update!',
+			cancelButtonText: 'Batal',
+			reverseButtons: true
+		}).then((result) => {
+			if (result.isConfirmed) {
+				submitFormWithLoading();
+			}
+		});
 	}
 
-	function submitForm() {
-		// Get the form element
+	function submitFormWithLoading() {
+		Swal.fire({
+			title: 'Mengupdate Data...',
+			text: 'Mohon tunggu sebentar',
+			allowOutsideClick: false,
+			allowEscapeKey: false,
+			showConfirmButton: false,
+			didOpen: () => {
+				Swal.showLoading();
+			}
+		});
+
 		const form = document.getElementById('audiometri-review');
+		const formData = new FormData(form);
 
-		// Submit the form
-		form.submit();
-
-		// Hide the modal
-		const simpanModal = bootstrap.Modal.getInstance(document.getElementById('simpanModal'));
-		simpanModal.hide();
+		fetch(form.action, {
+			method: 'POST',
+			body: formData,
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest'
+			}
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.status) {
+				// Show success message
+				Swal.fire({
+					title: 'Berhasil!',
+					text: data.message || 'Data berhasil diupdate',
+					icon: 'success',
+					timer: 3000,
+					timerProgressBar: true,
+					showConfirmButton: false
+				}).then(() => {
+					// After 3 seconds, redirect to doctor_view
+					window.location.href = '<?= base_url('audiometri/doctor_view') ?>';
+				});
+			} else {
+				Swal.fire({
+					title: 'Gagal!',
+					text: data.message || 'Gagal mengupdate data',
+					icon: 'error',
+					confirmButtonColor: '#3085d6'
+				});
+			}
+		})
+		.catch(error => {
+			console.error('Error:', error);
+			Swal.fire({
+				title: 'Error!',
+				text: 'Terjadi kesalahan saat mengupdate data',
+				icon: 'error',
+				confirmButtonColor: '#3085d6'
+			});
+		});
 	}
 </script>
 
-<!-- Modal Simpan Data -->
-<div class="modal fade" id="simpanModal" tabindex="-1" aria-labelledby="simpanModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="simpanModalLabel">Simpan Data Audiometri</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-				Apakah Anda yakin ingin menyimpan data audiometri?
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-				<button type="button" class="btn btn-primary" onclick="submitForm()">Simpan</button>
-			</div>
-		</div>
-	</div>
-</div>
 
 <script>
 	// JavaScript untuk menampilkan audiogram

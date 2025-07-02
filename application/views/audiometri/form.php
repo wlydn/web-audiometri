@@ -234,6 +234,7 @@
 		const requiredFields = ['perusahaan', 'jabatan', 'nama', 'umur', 'jenis_kelamin', 'no_rm', 'tanggal_tes'];
 		let isValid = true;
 		let firstInvalidField = null;
+		let missingFields = [];
 
 		requiredFields.forEach(field => {
 			const input = document.getElementById(field);
@@ -241,43 +242,50 @@
 				isValid = false;
 				input.style.borderColor = '#dc3545';
 				if (!firstInvalidField) firstInvalidField = input;
+				
+				// Get field label for better error message
+				const label = document.querySelector(`label[for="${field}"]`);
+				const fieldName = label ? label.textContent.replace(':', '').replace('*', '').trim() : field;
+				missingFields.push(fieldName);
 			} else {
 				input.style.borderColor = '#ced4da';
 			}
 		});
 
 		if (!isValid) {
-			alert('Mohon lengkapi semua field yang wajib diisi (*)');
-			if (firstInvalidField) {
-				firstInvalidField.focus();
-			}
+			Swal.fire({
+				title: 'Data Tidak Lengkap!',
+				html: `Mohon lengkapi field berikut:<br><br><strong>${missingFields.join('<br>')}</strong>`,
+				icon: 'warning',
+				confirmButtonColor: '#3085d6',
+				confirmButtonText: 'OK'
+			}).then(() => {
+				if (firstInvalidField) {
+					firstInvalidField.focus();
+				}
+			});
 			return;
 		}
 
-		// Show modal if validation passes
-		const simpanModal = new bootstrap.Modal(document.getElementById('simpanModal'));
-		simpanModal.show();
+		// Show SweetAlert confirmation if validation passes
+		Swal.fire({
+			title: '<?= $action == 'edit' ? 'Update' : 'Simpan' ?> Data Audiometri',
+			text: 'Apakah Anda yakin ingin <?= $action == 'edit' ? 'mengupdate' : 'menyimpan' ?> data audiometri ini?',
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Ya, <?= $action == 'edit' ? 'Update' : 'Simpan' ?>!',
+			cancelButtonText: 'Batal',
+			reverseButtons: true
+		}).then((result) => {
+			if (result.isConfirmed) {
+				submitFormWithLoading();
+			}
+		});
 	}
 </script>
 
-<!-- Modal Simpan Data -->
-<div class="modal fade" id="simpanModal" tabindex="-1" aria-labelledby="simpanModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="simpanModalLabel">Simpan Data Audiometri</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Apakah Anda yakin ingin menyimpan data audiometri?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-primary" onclick="submitForm()">Simpan</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- Modal untuk riwayat No RM -->
 <div class="modal fade" id="rmHistoryModal" tabindex="-1" role="dialog">
@@ -601,11 +609,75 @@
 		}
 	});
 
-	// Form submission handler
-	function submitForm() {
+	// Form submission handler with SweetAlert loading
+	function submitFormWithLoading() {
+		// Show loading state
+		Swal.fire({
+			title: '<?= $action == 'edit' ? 'Mengupdate' : 'Menyimpan' ?> Data...',
+			text: 'Mohon tunggu sebentar',
+			allowOutsideClick: false,
+			allowEscapeKey: false,
+			showConfirmButton: false,
+			didOpen: () => {
+				Swal.showLoading();
+			}
+		});
+
 		const form = document.getElementById('audiometri-form');
 		isFormSubmitting = true;
-		form.submit();
+		
+		// Submit form using AJAX to handle response with SweetAlert
+		const formData = new FormData(form);
+		
+		fetch(form.action, {
+			method: 'POST',
+			body: formData,
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest'
+			}
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.status) {
+				Swal.fire({
+					title: 'Berhasil!',
+					text: data.message || 'Data berhasil <?= $action == 'edit' ? 'diupdate' : 'disimpan' ?>',
+					icon: 'success',
+					timer: 3000,
+					timerProgressBar: true,
+					showConfirmButton: false
+				}).then(() => {
+					// Redirect based on action
+					<?php if ($action == 'edit'): ?>
+						window.location.href = '<?= base_url('audiometri/view/' . ($test_data['id'] ?? '')) ?>';
+					<?php else: ?>
+						if (data.id) {
+							window.location.href = '<?= base_url('audiometri/view/') ?>' + data.id;
+						} else {
+							window.location.href = '<?= base_url('audiometri/list_tests') ?>';
+						}
+					<?php endif; ?>
+				});
+			} else {
+				Swal.fire({
+					title: 'Gagal!',
+					text: data.message || 'Gagal <?= $action == 'edit' ? 'mengupdate' : 'menyimpan' ?> data',
+					icon: 'error',
+					confirmButtonColor: '#3085d6'
+				});
+				isFormSubmitting = false;
+			}
+		})
+		.catch(error => {
+			console.error('Error:', error);
+			// Fallback to regular form submission if AJAX fails
+			form.submit();
+		});
+	}
+
+	// Legacy form submission handler (fallback)
+	function submitForm() {
+		submitFormWithLoading();
 	}
 
 	// Form validation before submit

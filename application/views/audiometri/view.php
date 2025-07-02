@@ -320,40 +320,73 @@
 	<?= json_encode($test_data) ?>
 </script>
 
-<!-- Modal Delete Data -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus Data</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-				Apakah Anda yakin ingin menghapus data audiometri ini?
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-				<button type="button" class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
-			</div>
-		</div>
-	</div>
-</div>
 
 <script>
-	let deleteId = null;
-	let deleteRedirectUrl = '<?= base_url('audiometri/list_tests') ?>';
-
 	function showDeleteModal(id) {
-		deleteId = id;
-		const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-		deleteModal.show();
-	}
+		Swal.fire({
+			title: 'Konfirmasi Hapus',
+			text: 'Yakin ingin menghapus data ini? Data yang dihapus tidak dapat dikembalikan!',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#d33',
+			cancelButtonColor: '#3085d6',
+			confirmButtonText: 'Ya, Hapus!',
+			cancelButtonText: 'Batal',
+			reverseButtons: true
+		}).then((result) => {
+			if (result.isConfirmed) {
+				// Show loading state
+				Swal.fire({
+					title: 'Menghapus...',
+					text: 'Mohon tunggu sebentar',
+					allowOutsideClick: false,
+					allowEscapeKey: false,
+					showConfirmButton: false,
+					didOpen: () => {
+						Swal.showLoading();
+					}
+				});
 
-	function confirmDelete() {
-		if (deleteId) {
-			// Redirect to delete URL without additional confirmation
-			window.location.replace('<?= base_url('audiometri/delete/') ?>' + deleteId);
-		}
+				// Make AJAX request to delete
+				fetch('<?= base_url('audiometri/delete/') ?>' + id, {
+					method: 'POST',
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.status) {
+						Swal.fire({
+							title: 'Berhasil!',
+							text: data.message || 'Data berhasil dihapus',
+							icon: 'success',
+							timer: 3000,
+							timerProgressBar: true,
+							showConfirmButton: false
+						}).then(() => {
+							window.location.href = '<?= base_url('audiometri/list_tests') ?>';
+						});
+					} else {
+						Swal.fire({
+							title: 'Gagal!',
+							text: data.message || 'Gagal menghapus data',
+							icon: 'error',
+							confirmButtonColor: '#3085d6'
+						});
+					}
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					Swal.fire({
+						title: 'Error!',
+						text: 'Terjadi kesalahan saat menghapus data',
+						icon: 'error',
+						confirmButtonColor: '#3085d6'
+					});
+				});
+			}
+		});
 	}
 
 	// JavaScript untuk menampilkan audiogram
