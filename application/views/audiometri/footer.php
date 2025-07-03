@@ -113,12 +113,12 @@
                         }
                     });
                     
-                    fetch('<?= base_url('audiometri/delete/') ?>' + id, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
+					fetch('<?= base_url('audiometri/delete/') ?>' + id, {
+						method: 'POST',
+						headers: {
+							'X-Requested-With': 'XMLHttpRequest'
+						}
+					})
                     .then(response => response.json())
                     .then(data => {
                         if (data.status) {

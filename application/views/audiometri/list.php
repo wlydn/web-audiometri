@@ -136,10 +136,6 @@
 												class="btn btn-outline-info" title="Export PDF" target="_blank">
 												<i class="fas fa-file-pdf"></i>
 											</a>
-											<button onclick="deleteRecord(<?= $test['id'] ?>)"
-												class="btn btn-outline-danger" title="Hapus">
-												<i class="fas fa-trash"></i>
-											</button>
 										</div>
 									</td>
 								</tr>
