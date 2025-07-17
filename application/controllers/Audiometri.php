@@ -162,11 +162,8 @@ class Audiometri extends CI_Controller
 			$data['filters'] = $filters;
 			$data['current_page'] = $page;
 
-			// Setup pagination
-			$this->load->library('pagination');
-			$config = $this->_get_pagination_config($data['total_tests'], $limit);
-			$this->pagination->initialize($config);
-			$data['pagination'] = $this->pagination->create_links();
+			// Setup custom pagination
+			$data['pagination'] = $this->_generate_custom_pagination($data['total_tests'], $limit, $page, $filters);
 
 			$this->load->view('audiometri/header', $data);
 			$this->load->view('audiometri/list', $data);
@@ -338,7 +335,7 @@ class Audiometri extends CI_Controller
 			}
 
 			// STEP 2: Validate and prepare all form data
-			$form_data_result = $this->_prepare_and_validate_form_data();
+			$form_data_result = $this->_prepare_and_validate_form_data($id); // Pass ID to know if it's edit
 
 			if (!$form_data_result['status']) {
 				if ($this->input->is_ajax_request()) {
@@ -464,7 +461,7 @@ class Audiometri extends CI_Controller
 	/**
 	 * Prepare and validate form data (INCLUDING audiometric values)
 	 */
-	private function _prepare_and_validate_form_data()
+	private function _prepare_and_validate_form_data($id = null)
 	{
 		try {
 			// Basic patient data
@@ -477,6 +474,11 @@ class Audiometri extends CI_Controller
 				'no_rm' => trim($this->input->post('no_rm')),
 				'tanggal_tes' => $this->input->post('tanggal_tes')
 			];
+
+			// Only include impression field during edit operations
+			if ($id !== null) {
+				$data['impression'] = trim($this->input->post('impression'));
+			}
 
 			// Validate and add audiometric values
 			$frequencies = ['250', '500', '1000', '2000', '3000', '4000', '6000'];
@@ -561,39 +563,87 @@ class Audiometri extends CI_Controller
 	}
 
 	/**
-	 * Get pagination configuration
+	 * Generate custom pagination - MANUAL IMPLEMENTATION
 	 */
-	private function _get_pagination_config($total_rows, $per_page)
+	private function _generate_custom_pagination($total_rows, $per_page, $current_page, $filters = [])
 	{
-		$config['base_url'] = base_url('audiometri/list_tests');
-		$config['total_rows'] = $total_rows;
-		$config['per_page'] = $per_page;
-		$config['page_query_string'] = TRUE;
-		$config['query_string_segment'] = 'page';
-		$config['reuse_query_string'] = TRUE;
+		if ($total_rows <= $per_page) {
+			return ''; // No pagination needed
+		}
 
-		// Bootstrap 5 styling
-		$config['full_tag_open'] = '<nav><ul class="pagination justify-content-center">';
-		$config['full_tag_close'] = '</ul></nav>';
-		$config['first_link'] = 'First';
-		$config['last_link'] = 'Last';
-		$config['first_tag_open'] = '<li class="page-item">';
-		$config['first_tag_close'] = '</li>';
-		$config['prev_link'] = '&laquo;';
-		$config['prev_tag_open'] = '<li class="page-item">';
-		$config['prev_tag_close'] = '</li>';
-		$config['next_link'] = '&raquo;';
-		$config['next_tag_open'] = '<li class="page-item">';
-		$config['next_tag_close'] = '</li>';
-		$config['last_tag_open'] = '<li class="page-item">';
-		$config['last_tag_close'] = '</li>';
-		$config['cur_tag_open'] = '<li class="page-item active"><a class="page-link" href="#">';
-		$config['cur_tag_close'] = '</a></li>';
-		$config['num_tag_open'] = '<li class="page-item">';
-		$config['num_tag_close'] = '</li>';
-		$config['attributes'] = array('class' => 'page-link');
-
-		return $config;
+		$total_pages = ceil($total_rows / $per_page);
+		$current_page = max(1, min($current_page, $total_pages));
+		
+		// Build base URL with filters
+		$base_url = base_url('audiometri/list_tests');
+		$query_params = [];
+		
+		if (!empty($filters['nama'])) {
+			$query_params['nama'] = $filters['nama'];
+		}
+		if (!empty($filters['perusahaan'])) {
+			$query_params['perusahaan'] = $filters['perusahaan'];
+		}
+		if (!empty($filters['tanggal_dari'])) {
+			$query_params['tanggal_dari'] = $filters['tanggal_dari'];
+		}
+		if (!empty($filters['tanggal_sampai'])) {
+			$query_params['tanggal_sampai'] = $filters['tanggal_sampai'];
+		}
+		
+		$query_string = !empty($query_params) ? '&' . http_build_query($query_params) : '';
+		
+		$pagination = '<nav><ul class="pagination justify-content-center">';
+		
+		// First page link
+		if ($current_page > 1) {
+			$pagination .= '<li class="page-item">';
+			$pagination .= '<a class="page-link" href="' . $base_url . '?page=1' . $query_string . '">First</a>';
+			$pagination .= '</li>';
+		}
+		
+		// Previous page link
+		if ($current_page > 1) {
+			$prev_page = $current_page - 1;
+			$pagination .= '<li class="page-item">';
+			$pagination .= '<a class="page-link" href="' . $base_url . '?page=' . $prev_page . $query_string . '">&laquo;</a>';
+			$pagination .= '</li>';
+		}
+		
+		// Page number links
+		$start_page = max(1, $current_page - 2);
+		$end_page = min($total_pages, $current_page + 2);
+		
+		for ($i = $start_page; $i <= $end_page; $i++) {
+			if ($i == $current_page) {
+				$pagination .= '<li class="page-item active">';
+				$pagination .= '<a class="page-link" href="#">' . $i . '</a>';
+				$pagination .= '</li>';
+			} else {
+				$pagination .= '<li class="page-item">';
+				$pagination .= '<a class="page-link" href="' . $base_url . '?page=' . $i . $query_string . '">' . $i . '</a>';
+				$pagination .= '</li>';
+			}
+		}
+		
+		// Next page link
+		if ($current_page < $total_pages) {
+			$next_page = $current_page + 1;
+			$pagination .= '<li class="page-item">';
+			$pagination .= '<a class="page-link" href="' . $base_url . '?page=' . $next_page . $query_string . '">&raquo;</a>';
+			$pagination .= '</li>';
+		}
+		
+		// Last page link
+		if ($current_page < $total_pages) {
+			$pagination .= '<li class="page-item">';
+			$pagination .= '<a class="page-link" href="' . $base_url . '?page=' . $total_pages . $query_string . '">Last</a>';
+			$pagination .= '</li>';
+		}
+		
+		$pagination .= '</ul></nav>';
+		
+		return $pagination;
 	}
 
 	/**
