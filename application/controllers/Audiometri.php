@@ -596,11 +596,11 @@ class Audiometri extends CI_Controller
 		$pagination = '<nav><ul class="pagination justify-content-center">';
 		
 		// First page link
-		if ($current_page > 1) {
-			$pagination .= '<li class="page-item">';
-			$pagination .= '<a class="page-link" href="' . $base_url . '?page=1' . $query_string . '">First</a>';
-			$pagination .= '</li>';
-		}
+		// if ($current_page > 1) {
+		// 	$pagination .= '<li class="page-item">';
+		// 	$pagination .= '<a class="page-link" href="' . $base_url . '?page=1' . $query_string . '">First</a>';
+		// 	$pagination .= '</li>';
+		// }
 		
 		// Previous page link
 		if ($current_page > 1) {
@@ -635,11 +635,11 @@ class Audiometri extends CI_Controller
 		}
 		
 		// Last page link
-		if ($current_page < $total_pages) {
-			$pagination .= '<li class="page-item">';
-			$pagination .= '<a class="page-link" href="' . $base_url . '?page=' . $total_pages . $query_string . '">Last</a>';
-			$pagination .= '</li>';
-		}
+		// if ($current_page < $total_pages) {
+		// 	$pagination .= '<li class="page-item">';
+		// 	$pagination .= '<a class="page-link" href="' . $base_url . '?page=' . $total_pages . $query_string . '">Last</a>';
+		// 	$pagination .= '</li>';
+		// }
 		
 		$pagination .= '</ul></nav>';
 		
